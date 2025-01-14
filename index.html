@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-weight: 700;
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            font-size: 14px;
+            padding: 10px 15px;
+        }
+
+        button {
+            font-weight: 500;
+        }
+
+        .btn-success {
+            background-color: #4caf50;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: #45a049;
+        }
+
+        .task-list {
+            margin-top: 20px;
+        }
+
+        .list-group-item {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .task-content {
+            font-size: 14px;
+            color: #343a40;
+            font-weight: 400;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .task-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .update-button {
+            background-color: #17a2b8;
+            border: none;
+            font-size: 14px;
+        }
+
+        .update-button:hover {
+            background-color: #138496;
+        }
+
+        .delete-button {
+            background-color: #dc3545;
+            border: none;
+            font-size: 14px;
+        }
+
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center">Task Manager</h1>
+    <div class="task-form">
+        <h2>Create Task</h2>
+        <div class="form-group">
+            <input type="text" class="form-control" id="title" placeholder="Task Title" required>
+        </div>
+        <div class="form-group">
+            <textarea class="form-control" id="description" rows="3" placeholder="Task Description" required></textarea>
+        </div>
+        <button class="btn btn-success btn-block" onclick="createTask()">Add Task</button>
+    </div>
+    <div>
+        <h2>Tasks</h2>
+        <ul id="taskList" class="list-group task-list"></ul>
+    </div>
+</div>
+<script>
+    let currentTaskId = null;
+
+    async function fetchTasks() {
+        const response = await fetch('/tasks');
+        const tasks = await response.json();
+        const taskList = document.getElementById('taskList');
+        taskList.innerHTML = '';
+        tasks.forEach(task => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+
+            const taskContent = document.createElement('div');
+            taskContent.className = 'task-content';
+            taskContent.innerHTML = `
+            <strong>${task.title}</strong>: ${task.description}
+            <br>
+            <small class="text-muted">Created at: ${new Date(task.created_at).toLocaleString()}</small>
+        `;
+            li.appendChild(taskContent);
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'task-buttons';
+
+            const updateButton = document.createElement('button');
+            updateButton.textContent = 'Update';
+            updateButton.className = 'btn btn-sm update-button';
+            updateButton.onclick = () => {
+                currentTaskId = task.id;
+                document.getElementById('title').value = task.title;
+                document.getElementById('description').value = task.description;
+            };
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.className = 'btn btn-sm delete-button';
+            deleteButton.onclick = () => deleteTask(task.id);
+
+            buttonContainer.appendChild(updateButton);
+            buttonContainer.appendChild(deleteButton);
+            li.appendChild(buttonContainer);
+
+            taskList.appendChild(li);
+        });
+    }
+
+
+    async function createTask() {
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+
+        if (currentTaskId) {
+            await fetch(`/tasks/${currentTaskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, description })
+            });
+            currentTaskId = null;
+        } else {
+            await fetch('/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, description })
+            });
+        }
+
+        document.getElementById('title').value = '';
+        document.getElementById('description').value = '';
+        fetchTasks();
+    }
+
+    async function deleteTask(id) {
+        await fetch(`/tasks/${id}`, {
+            method: 'DELETE'
+        });
+        fetchTasks();
+    }
+
+    fetchTasks();
+</script>
+</body>
+</html>
