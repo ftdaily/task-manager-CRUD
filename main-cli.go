@@ -77,6 +77,7 @@ func lihatTugas() {
 }
 
 func tambahTugas() {
+	bacaInput("")
 	judul := bacaInput("Masukkan judul tugas: ")
 	if judul == "" {
 		fmt.Println("Judul tidak boleh kosong!")
@@ -98,6 +99,7 @@ func tambahTugas() {
 }
 
 func perbaruiTugas() {
+	bacaInput("")
 	id := bacaInput("Masukkan ID tugas yang akan diperbarui: ")
 	judul := bacaInput("Masukkan judul baru: ")
 	if judul == "" {
@@ -120,6 +122,7 @@ func perbaruiTugas() {
 }
 
 func hapusTugas() {
+	bacaInput("")
 	id := bacaInput("Masukkan ID tugas yang akan dihapus: ")
 	_, err := db.Exec("DELETE FROM tasks WHERE id = ?", id)
 	if err != nil {
